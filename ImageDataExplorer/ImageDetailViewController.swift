@@ -11,16 +11,25 @@ import SnapKit
 public struct DetailData {
     var title: String?
     var exifDictionary: NSDictionary?
+    var sortedKeys: [String]?
     
     init(title: String?, data: NSDictionary?) {
         self.title = title
         self.exifDictionary = data
+        self.sortedKeys = (self.exifDictionary?.allKeys as? [String])?.sorted {
+            if $0.contains("{") && $1.contains("{") { return $0 < $1 }
+            if $0.contains("{") { return true }
+            if $1.contains("{") { return false }
+            
+            return $0 < $1
+        }
     }
 }
 
 public class ImageDetailViewController: UIViewController {
     let tableView = UITableView()
     var exifDict: NSDictionary?
+    var sortedKeys: [String]?
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -30,9 +39,10 @@ public class ImageDetailViewController: UIViewController {
         self.init()
         
         self.exifDict = data.exifDictionary
+        self.sortedKeys = data.sortedKeys
         self.title = data.title
         
-        print(exifDict)
+        print(exifDict as Any)
     }
     
     required init?(coder aDecoder: NSCoder) {
@@ -55,17 +65,26 @@ public class ImageDetailViewController: UIViewController {
             make.edges.equalToSuperview()
         }
     }
+    
+    private func pushDetailControllerWith(key: String, dict: NSDictionary) -> Void {
+        let detailData = DetailData(title: key, data: dict)
+        let detailController = ImageDetailViewController(data: detailData)
+        self.navigationController?.pushViewController(detailController, animated: true)
+    }
 }
 
 extension ImageDetailViewController: UITableViewDelegate, UITableViewDataSource {
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         guard let exifDict = exifDict else { return }
+        guard let sortedKeys = sortedKeys else { return }
         
-        let key = exifDict.allKeys[indexPath.row] as? String
+        let key = sortedKeys[indexPath.row]
         if let value = exifDict[key] as? NSDictionary {
-            let detailData = DetailData(title: key, data: value)
-            let detailController = ImageDetailViewController(data: detailData)
-            self.navigationController?.pushViewController(detailController, animated: true)
+            pushDetailControllerWith(key: key, dict: value)
+        } else if let value = exifDict[key] as? [NSDictionary] {
+            if let firstDict = value.first {
+                pushDetailControllerWith(key: key, dict: firstDict)
+            }
         }
     }
     
@@ -82,18 +101,24 @@ extension ImageDetailViewController: UITableViewDelegate, UITableViewDataSource 
             cell.textLabel?.text = "Cannot dequeue cell"
             return cell
         }
-        
         guard let exifDict = exifDict else { return UITableViewCell() }
+        guard let sortedKeys = sortedKeys else { return UITableViewCell() }
         
-        if let key = exifDict.allKeys[indexPath.row] as? String {
-            if let _ = exifDict[key] as? NSDictionary {
+        // get key
+        let key = sortedKeys[indexPath.row]
+        // check if value is a dictionary or string
+        if let _ = exifDict[key] as? NSDictionary {
+            cell.set(primary: key, secondary: nil)
+            cell.accessoryType = .disclosureIndicator
+        } else if let dictArray = exifDict[key] as? [NSDictionary] {
+            if dictArray.count == 1 {
                 cell.set(primary: key, secondary: nil)
                 cell.accessoryType = .disclosureIndicator
-            } else {
-                let valueString = exifDict.stringFor(key: key)
-                cell.set(primary: key, secondary: valueString)
-                cell.isUserInteractionEnabled = false
             }
+        } else {
+            let valueString = exifDict.stringFor(key: key)
+            cell.set(primary: key, secondary: valueString)
+            cell.isUserInteractionEnabled = false
         }
         
         return cell
