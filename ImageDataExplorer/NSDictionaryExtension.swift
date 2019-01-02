@@ -37,8 +37,12 @@ extension NSDictionary {
         
         if let valueArray = value as? [Any] {
             var arrString: String = ""
-            for value in valueArray {
-                arrString += ", \(value)"
+            for index in 0..<valueArray.count {
+                if index == 0 {
+                    arrString = "\(valueArray[index])"
+                } else {
+                    arrString += ", \(valueArray[index])"
+                }
             }
             return arrString
         }

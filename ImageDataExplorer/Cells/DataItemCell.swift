@@ -50,6 +50,8 @@ public class DataItemCell: BaseTableViewCell {
         
         primaryLabel.sizeToFit()
         secondaryLabel.sizeToFit()
+        secondaryLabel.numberOfLines = 0
+        secondaryLabel.lineBreakMode = .byWordWrapping
         secondaryLabel.textAlignment = .right
     }
     

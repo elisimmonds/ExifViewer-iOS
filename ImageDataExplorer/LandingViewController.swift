@@ -12,7 +12,6 @@ import SnapKit
 class LandingViewController: UIViewController, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
     let imagePicker = UIImagePickerController()
     let imageView = UIImageView()
-    let pickerLabel = UILabel()
     let exifButton = UIButton()
     let shareButton = UIButton()
     var exifData: [UIImagePickerController.InfoKey : Any]?
@@ -41,18 +40,18 @@ class LandingViewController: UIViewController, UINavigationControllerDelegate, U
         self.view.addSubview(imageView)
         
         exifButton.setTitle("EXIF Data", for: .normal)
-        exifButton.setTitleColor(.black, for: .normal)
         exifButton.titleLabel?.textAlignment = .center
         let openExifViewer = UITapGestureRecognizer(target: self, action: #selector(openExifDataViewer))
         exifButton.addGestureRecognizer(openExifViewer)
         self.view.addSubview(exifButton)
         
         shareButton.setTitle("Share", for: .normal)
-        shareButton.setTitleColor(.black, for: .normal)
         shareButton.titleLabel?.textAlignment = .center
         let btnTap = UITapGestureRecognizer(target: self, action: #selector(shareContent(sender:)))
         shareButton.addGestureRecognizer(btnTap)
         self.view.addSubview(shareButton)
+        
+        self.toggleLabel(color: .lightGray)
     }
     
     private func createConstraints() -> Void {
@@ -62,12 +61,6 @@ class LandingViewController: UIViewController, UINavigationControllerDelegate, U
             make.centerX.equalToSuperview()
             make.height.width.equalTo(UIScreen.main.bounds.width * 0.50)
         }
-        
-//        pickerLabel.snp.makeConstraints { (make) in
-//            make.top.equalTo(imageView.snp.bottom).offset(30)
-//            make.width.equalToSuperview()
-//            make.height.equalTo(30)
-//        }
         
         exifButton.snp.makeConstraints { (make) in
             make.top.equalTo(imageView.snp.bottom).offset(30)
@@ -99,6 +92,11 @@ class LandingViewController: UIViewController, UINavigationControllerDelegate, U
             alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
             self.navigationController?.present(alert, animated: true, completion: nil)
         }
+    }
+    
+    private func toggleLabel(color: UIColor) {
+        self.shareButton.setTitleColor(color, for: .normal)
+        self.exifButton.setTitleColor(color, for: .normal)
     }
     
     @objc private func tapFunction() -> Void {
@@ -133,8 +131,10 @@ extension LandingViewController {
         
         if let pickedImg = info[UIImagePickerController.InfoKey.editedImage] as? UIImage {
             self.imageView.image = pickedImg
+            self.toggleLabel(color: .black)
         } else if let pickedImg = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
             self.imageView.image = pickedImg
+            self.toggleLabel(color: .black)
         }
         dismiss(animated: true, completion: nil)
     }
@@ -182,8 +182,8 @@ extension LandingViewController {
             print("Instagram not found")
         }
         
-        let image = UIImage() 
-        let objectsToShare: [AnyObject] = [ image ]
+//        let image = UIImage() 
+//        let objectsToShare: [AnyObject] = [ image ]
 //        let activityViewController = UIActivityViewController(activityItems: objectsToShare, applicationActivities: nil)
 //        activityViewController.popoverPresentationController?.sourceView = self.view
 //        activityViewController.excludedActivityTypes = [UIActivity.ActivityType.airDrop]
